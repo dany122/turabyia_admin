@@ -1,0 +1,102 @@
+innerText = "إضافة بحث ";
+        document.getElementById('cIn').value = '';
+        document.getElementById('tIn').value = '';
+        document.getElementById('txtIn').value = '';
+        document.getElementById('editItemIndex').value = "-1"; // تعني إضافة وليس تعديل
+        document.getElementById('modal').style.display = 'block';
+    }
+
+    function editItem(catName, index) {
+        const item = db[catName][index];
+        document.getElementById('modalTitle').innerText = "تعديل البحث";
+        document.getElementById('cIn').value = catName;
+        document.getElementById('tIn').value = item.t;
+        document.getElementById('txtIn').value = item.x;
+        document.getElementById('colIn').value = item.color || "#ffffff";
+        document.getElementById('editCatIndex').value = catName;
+        document.getElementById('editItemIndex').value = index;
+        document.getElementById('modal').style.display = 'block';
+    }
+
+    function editCategoryName(oldName) {
+        const newName = prompt("أدخل الاسم الجديد للقسم:", oldName);
+        if (newName && newName !== oldName) {
+            db[newName] = db[oldName];
+            delete db[oldName];
+            saveAndRender();
+        }
+    }
+
+    function saveData() {
+        const cat = document.getElementById('cIn').value.trim();
+        const title = document.getElementById('tIn').value.trim();
+        const text = document.getElementById('txtIn').value.trim();
+        const color = document.getElementById('colIn').value;
+        const editIdx = document.getElementById('editItemIndex').value;
+        const oldCat = document.getElementById('editCatIndex').value;
+
+        if (!cat  !title  !text) return alert(" !اكمل البيانات ");
+
+        // إذا كنا في حالة تعديل
+        if (editIdx !== "-1") {
+            // إذا تغير اسم القسم، نحذف القديم وننقل للجديد
+            if (oldCat !== cat) {
+                db[oldCat].splice(editIdx, 1);
+                if (db[oldCat].length === 0) delete db[oldCat];
+                if (!db[cat]) db[cat] = [];
+                db[cat].push({ t: title, x: text, color: color });
+            } else {
+                db[cat][editIdx] = { t: title, x: text, color: color };
+            }
+        } else {
+            // حالة إضافة جديدة
+            if (!db[cat]) db[cat] = [];
+            db[cat].push({ t: title, x: text, color: color });
+        }
+
+        saveAndRender();
+        closeModal();
+    }
+
+    function del(c, i) {
+        if (confirm("هل أنت متأكد من حذف هذا البحث؟")) {
+            db[c].splice(i, 1);
+            if (db[c].length === 0) delete db[c];
+            saveAndRender();
+        }
+    }
+
+    function saveAndRender() {
+        localStorage.setItem('myLibV2', JSON.stringify(db));
+        render();
+    }
+
+    function render() {
+        const div = document.getElementById('list');
+        div.innerHTML = '';
+        for (let c in db) {
+            let s = `
+            <div class="section-box">
+                <div class="section-header">
+                    <span> ${c}</span>
+                    <button class="edit-cat-btn" onclick="editCategoryName('${c}')">تعديل أسم القسم</button>
+                </div>`;
+            db[c].forEach((r, i) => {
+                s += `
+                <div class="item">
+                    <div class="item-top">
+                        <b>${r.t}</b>
+                        <div class="btn-group">
+                            <button class="edit-btn" onclick="editItem('${c}', ${i})">تعديل</button>
+                            <button class="del-btn" onclick="del('${c}', ${i})">حذف</button>
+                        </div>
+                    </div>
+                </div>`;
+            });
+            div.innerHTML += s + </div>;
+        }
+    }
+    render();
+</script>
+</body>
+              </html>
